@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>compareUserAge</title>
+  </head>
+
+  <body>
+    <h1>Compare user Age</h1>
+    <button onclick="compareUserAge()">Enter Artist Age</button>
+
+    <script>
+       function compareUserAge() {
+        
+       
+            let age;
+            let isValid = false;
+
+
+            while (!isValid) {
+                age = prompt("Please enter the age of your favorite artist:");
+               
+                age = Number(age);                
+                
+                if (!isNaN(age) && age !== 0) {
+                    isValid = true;
+                } else {
+                    alert("Invalid input. Please enter a valid number.");
+                }
+            
+            }
+
+           
+           
+            if (age < 25) {
+                alert(`They’re ${age} old and they’re younger than Google`);
+            } else if (age === 25) {
+                alert(`They’re ${age} and they’re as old as Google`);
+            } else {
+                alert(`They’re ${age} and they’re older than Google`);
+            }
+        }
+
+
+
+    </script>
+  </body>
+</html>
