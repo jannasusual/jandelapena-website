@@ -47,23 +47,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['newEmail'], $_POST['ne
 
     $checkEmailQuery->close(); // Close the email check query
 }
-
-// Approve or Decline logic
-if (isset($_POST['approve'])) {
-    $userId = $_POST['user_id'];
-    $updateQuery = "UPDATE users SET status = 'approved' WHERE id = ?";
-    $stmt = $conn->prepare($updateQuery);
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $stmt->close();
-} elseif (isset($_POST['decline'])) {
-    $userId = $_POST['user_id'];
-    $updateQuery = "UPDATE users SET status = 'declined' WHERE id = ?";
-    $stmt = $conn->prepare($updateQuery);
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $stmt->close();
-}
 ?>
 
 <!DOCTYPE html>
@@ -107,7 +90,7 @@ if (isset($_POST['approve'])) {
                 <h4 class="text-white text-center mb-4">Admin Dashboard</h4>
                 <a href="#dashboard">Dashboard</a>
                 <a href="#manage-users">Manage Users</a>
-                <a href="#activities">Activities</a>
+                <a href="#user-accounts">User Accounts</a>
                 <a href="#settings">Settings</a>
                 <form method="POST" class="text-center mt-4">
                     <button type="submit" name="logout" class="btn btn-danger">Logout</button>
@@ -153,6 +136,7 @@ if (isset($_POST['approve'])) {
                         </tr>
                     </thead>
                     <tbody>
+                        <!-- Fetch users from database and display in table -->
                         <?php
                         $query = "SELECT id, email FROM user_logins";
                         $result = $conn->query($query);
@@ -177,108 +161,62 @@ if (isset($_POST['approve'])) {
 
                 <hr>
 
-                <!-- Activities Section -->
-                <h3 id="activities">Pending Requests</h3>
-                <p>Here you can view and manage pending user requests.</p>
+                <!-- User Accounts Section -->
+                <h3 id="user-accounts">User Accounts</h3>
+                <p>Below is the list of all registered user accounts.</p>
 
-                <!-- Pending Requests Table -->
+                <!-- Example table to display user accounts -->
                 <table class="table table-striped">
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Name</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Middle Name</th>
                             <th>Email</th>
-                            <th>Actions</th>
+                            <th>Contact Number</th>
+                            <th>Birthdate</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th>Civil Status</th>
+                            <th>Address</th>
+                            <th>Purpose</th>
+                            <th>Document</th> <!-- New column for the image -->
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Fetch pending user requests from database -->
+                        <!-- Fetch user account details from database -->
                         <?php
-                        $pendingQuery = "SELECT id, firstname, lastname, email FROM users WHERE civil_status IS NULL";
-                        $result = $conn->query($pendingQuery);
+                        $query = "SELECT id, firstname, lastname, middle_name, email, contactnumber, birthdate, age, gender, civil_status, address, purpose, document FROM users";
+                        $result = $conn->query($query);
 
                         if ($result->num_rows > 0) {
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
                                 echo "<td>" . $row['id'] . "</td>";
-                                echo "<td>" . $row['firstname'] . " " . $row['lastname'] . "</td>";
+                                echo "<td>" . $row['firstname'] . "</td>";
+                                echo "<td>" . $row['lastname'] . "</td>";
+                                echo "<td>" . $row['middle_name'] . "</td>";
                                 echo "<td>" . $row['email'] . "</td>";
-                                echo "<td>
-                                        <form method='POST' class='d-inline'>
-                                            <input type='hidden' name='user_id' value='" . $row['id'] . "'>
-                                            <button type='submit' name='approve' class='btn btn-success btn-sm'>Approve</button>
-                                        </form>
-                                        <form method='POST' class='d-inline'>
-                                            <input type='hidden' name='user_id' value='" . $row['id'] . "'>
-                                            <button type='submit' name='decline' class='btn btn-danger btn-sm'>Decline</button>
-                                        </form>
-                                      </td>";
+                                echo "<td>" . $row['contactnumber'] . "</td>";
+                                echo "<td>" . $row['birthdate'] . "</td>";
+                                echo "<td>" . $row['age'] . "</td>";
+                                echo "<td>" . $row['gender'] . "</td>";
+                                echo "<td>" . $row['civil_status'] . "</td>";
+                                echo "<td>" . $row['address'] . "</td>";
+                                echo "<td>" . $row['purpose'] . "</td>";
+
+                                // Check if a document exists and display it
+                                if (!empty($row['document'])) {
+                                    echo "<td><img src='" . $row['document'] . "' alt='User Document' width='100' height='100'></td>";
+                                } else {
+                                    echo "<td>No document</td>";
+                                }
+
                                 echo "</tr>";
                             }
                         } else {
-                            echo "<tr><td colspan='4'>No pending requests found.</td></tr>";
-                        }
-                        ?>
-                    </tbody>
-                </table>
-
-                <hr>
-
-                <!-- History Section -->
-                <h3 id="history">History</h3>
-                <h4>Approved Users</h4>
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $approvedQuery = "SELECT id, firstname, lastname, email FROM users WHERE civil_status = 'approved'";
-                        $result = $conn->query($approvedQuery);
-
-                        if ($result->num_rows > 0) {
-                            while ($row = $result->fetch_assoc()) {
-                                echo "<tr>";
-                                echo "<td>" . $row['id'] . "</td>";
-                                echo "<td>" . $row['firstname'] . " " . $row['lastname'] . "</td>";
-                                echo "<td>" . $row['email'] . "</td>";
-                                echo "</tr>";
-                            }
-                        } else {
-                            echo "<tr><td colspan='3'>No approved users found.</td></tr>";
-                        }
-                        ?>
-                    </tbody>
-                </table>
-
-                <h4>Declined Users</h4>
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $declinedQuery = "SELECT id, firstname, lastname, email FROM users WHERE civil_status = 'declined'";
-                        $result = $conn->query($declinedQuery);
-
-                        if ($result->num_rows > 0) {
-                            while ($row = $result->fetch_assoc()) {
-                                echo "<tr>";
-                                echo "<td>" . $row['id'] . "</td>";
-                                echo "<td>" . $row['firstname'] . " " . $row['lastname'] . "</td>";
-                                echo "<td>" . $row['email'] . "</td>";
-                                echo "</tr>";
-                            }
-                        } else {
-                            echo "<tr><td colspan='3'>No declined users found.</td></tr>";
+                            echo "<tr><td colspan='12'>No user accounts found.</td></tr>";
                         }
                         ?>
                     </tbody>
