@@ -47,6 +47,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['newEmail'], $_POST['ne
 
     $checkEmailQuery->close(); // Close the email check query
 }
+
+// Handle approve and decline actions
+if (isset($_POST['action']) && isset($_POST['user_id'])) {
+    $userId = $_POST['user_id'];
+    $action = $_POST['action'];
+
+    if ($action === 'approve') {
+        // Move the user to history as approved
+        $approveQuery = $conn->prepare("UPDATE users SET status = 'approved' WHERE id = ?");
+        $approveQuery->bind_param("i", $userId);
+        $approveQuery->execute();
+    } elseif ($action === 'decline') {
+        // Move the user to history as declined
+        $declineQuery = $conn->prepare("UPDATE users SET status = 'declined' WHERE id = ?");
+        $declineQuery->bind_param("i", $userId);
+        $declineQuery->execute();
+    }
+}
+
+// Fetch users with 'pending' status
+$pendingUsersQuery = "SELECT id, firstname, lastname, email FROM users WHERE status = 'pending'";
+$pendingUsersResult = $conn->query($pendingUsersQuery);
+
+// Fetch approved users
+$approvedUsersQuery = "SELECT id, firstname, lastname, email FROM users WHERE status = 'approved'";
+$approvedUsersResult = $conn->query($approvedUsersQuery);
+
+// Fetch declined users
+$declinedUsersQuery = "SELECT id, firstname, lastname, email FROM users WHERE status = 'declined'";
+$declinedUsersResult = $conn->query($declinedUsersQuery);
 ?>
 
 <!DOCTYPE html>
@@ -91,6 +121,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['newEmail'], $_POST['ne
                 <a href="#dashboard">Dashboard</a>
                 <a href="#manage-users">Manage Users</a>
                 <a href="#user-accounts">User Accounts</a>
+                <a href="#activities">Activities</a>
+                <a href="#history">History</a>
                 <a href="#settings">Settings</a>
                 <form method="POST" class="text-center mt-4">
                     <button type="submit" name="logout" class="btn btn-danger">Logout</button>
@@ -181,7 +213,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['newEmail'], $_POST['ne
                             <th>Civil Status</th>
                             <th>Address</th>
                             <th>Purpose</th>
-                            <th>Document</th> <!-- New column for the image -->
+                            <th>Document</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -219,6 +251,101 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['newEmail'], $_POST['ne
                             echo "<tr><td colspan='12'>No user accounts found.</td></tr>";
                         }
                         ?>
+                    </tbody>
+                </table>
+
+                <hr>
+
+                <!-- Activities Section -->
+                <h3 id="activities">Activities</h3>
+                <p>Manage user activities here.</p>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($pendingUsersResult->num_rows > 0): ?>
+                            <?php while ($user = $pendingUsersResult->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo $user['id']; ?></td>
+                                    <td><?php echo $user['firstname']; ?></td>
+                                    <td><?php echo $user['lastname']; ?></td>
+                                    <td><?php echo $user['email']; ?></td>
+                                    <td>
+                                        <form method="POST" style="display:inline;">
+                                            <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
+                                            <button type="submit" name="action" value="approve" class="btn btn-sm btn-success">Approve</button>
+                                            <button type="submit" name="action" value="decline" class="btn btn-sm btn-danger">Decline</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr><td colspan="5">No pending requests found.</td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+
+                <hr>
+
+                <!-- History Section -->
+                <h3 id="history">History</h3>
+                <p>View approved and declined users here.</p>
+                <h4>Approved Users</h4>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($approvedUsersResult->num_rows > 0): ?>
+                            <?php while ($user = $approvedUsersResult->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo $user['id']; ?></td>
+                                    <td><?php echo $user['firstname']; ?></td>
+                                    <td><?php echo $user['lastname']; ?></td>
+                                    <td><?php echo $user['email']; ?></td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr><td colspan="4">No approved users found.</td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+
+                <h4>Declined Users</h4>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($declinedUsersResult->num_rows > 0): ?>
+                            <?php while ($user = $declinedUsersResult->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo $user['id']; ?></td>
+                                    <td><?php echo $user['firstname']; ?></td>
+                                    <td><?php echo $user['lastname']; ?></td>
+                                    <td><?php echo $user['email']; ?></td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr><td colspan="4">No declined users found.</td></tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
 
