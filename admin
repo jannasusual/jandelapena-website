@@ -120,7 +120,6 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                 <h4 class="text-white text-center mb-4">Admin Dashboard</h4>
                 <a href="#dashboard">Dashboard</a>
                 <a href="#manage-users">Manage Users</a>
-                <a href="#user-accounts">User Accounts</a>
                 <a href="#activities">Activities</a>
                 <a href="#history">History</a>
                 <a href="#settings">Settings</a>
@@ -158,6 +157,8 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                     </form>
                 </div>
 
+                <hr>
+
                 <!-- Example table to display users (for login accounts) -->
                 <table class="table table-striped">
                     <thead>
@@ -181,74 +182,11 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                                 echo "<td>
                                         <a href='edit_user.php?id=" . $row['id'] . "' class='btn btn-sm btn-warning'>Edit</a>
                                         <a href='delete_user.php?id=" . $row['id'] . "' class='btn btn-sm btn-danger'>Delete</a>
-                                      </td>";
+                                    </td>";
                                 echo "</tr>";
                             }
                         } else {
                             echo "<tr><td colspan='3'>No users found.</td></tr>";
-                        }
-                        ?>
-                    </tbody>
-                </table>
-
-                <hr>
-
-                <!-- User Accounts Section -->
-                <h3 id="user-accounts">User Accounts</h3>
-                <p>Below is the list of all registered user accounts.</p>
-
-                <!-- Example table to display user accounts -->
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Middle Name</th>
-                            <th>Email</th>
-                            <th>Contact Number</th>
-                            <th>Birthdate</th>
-                            <th>Age</th>
-                            <th>Gender</th>
-                            <th>Civil Status</th>
-                            <th>Address</th>
-                            <th>Purpose</th>
-                            <th>Document</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Fetch user account details from database -->
-                        <?php
-                        $query = "SELECT id, firstname, lastname, middle_name, email, contactnumber, birthdate, age, gender, civil_status, address, purpose, document FROM users";
-                        $result = $conn->query($query);
-
-                        if ($result->num_rows > 0) {
-                            while ($row = $result->fetch_assoc()) {
-                                echo "<tr>";
-                                echo "<td>" . $row['id'] . "</td>";
-                                echo "<td>" . $row['firstname'] . "</td>";
-                                echo "<td>" . $row['lastname'] . "</td>";
-                                echo "<td>" . $row['middle_name'] . "</td>";
-                                echo "<td>" . $row['email'] . "</td>";
-                                echo "<td>" . $row['contactnumber'] . "</td>";
-                                echo "<td>" . $row['birthdate'] . "</td>";
-                                echo "<td>" . $row['age'] . "</td>";
-                                echo "<td>" . $row['gender'] . "</td>";
-                                echo "<td>" . $row['civil_status'] . "</td>";
-                                echo "<td>" . $row['address'] . "</td>";
-                                echo "<td>" . $row['purpose'] . "</td>";
-
-                                // Check if a document exists and display it
-                                if (!empty($row['document'])) {
-                                    echo "<td><img src='" . $row['document'] . "' alt='User Document' width='100' height='100'></td>";
-                                } else {
-                                    echo "<td>No document</td>";
-                                }
-
-                                echo "</tr>";
-                            }
-                        } else {
-                            echo "<tr><td colspan='12'>No user accounts found.</td></tr>";
                         }
                         ?>
                     </tbody>
@@ -282,12 +220,63 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                                             <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
                                             <button type="submit" name="action" value="approve" class="btn btn-sm btn-success">Approve</button>
                                             <button type="submit" name="action" value="decline" class="btn btn-sm btn-danger">Decline</button>
+                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewUserModal<?php echo $user['id']; ?>">View</button>
                                         </form>
                                     </td>
                                 </tr>
+
+                                <!-- Modal to view user information -->
+                                    
+                        <div class="modal fade" id="viewUserModal<?php echo $user['id']; ?>" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="viewUserModalLabel">User Information</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <?php
+                                        // Fetch additional user info for the modal
+                                        $userInfoQuery = $conn->prepare("SELECT * FROM users WHERE id = ?");
+                                        $userInfoQuery->bind_param("i", $user['id']);
+                                        $userInfoQuery->execute();
+                                        $userInfoResult = $userInfoQuery->get_result();
+                                        $userInfo = $userInfoResult->fetch_assoc();
+
+                                        // Display user details
+                                        echo "<strong>First Name:</strong> " . htmlspecialchars($userInfo['firstname']) . "<br>";
+                                        echo "<strong>Last Name:</strong> " . htmlspecialchars($userInfo['lastname']) . "<br>";
+                                        echo "<strong>Middle Name:</strong> " . htmlspecialchars($userInfo['middle_name']) . "<br>";
+                                        echo "<strong>Email:</strong> " . htmlspecialchars($userInfo['email']) . "<br>";
+                                        echo "<strong>Contact Number:</strong> " . htmlspecialchars($userInfo['contactnumber']) . "<br>";
+                                        echo "<strong>Birthdate:</strong> " . htmlspecialchars($userInfo['birthdate']) . "<br>";
+                                        echo "<strong>Age:</strong> " . htmlspecialchars($userInfo['age']) . "<br>";
+                                        echo "<strong>Civil Status:</strong> " . htmlspecialchars($userInfo['civil_status']) . "<br>";
+                                        echo "<strong>Status:</strong> " . htmlspecialchars($userInfo['status']) . "<br>";
+                                        echo "<strong>Address:</strong> " . htmlspecialchars($userInfo['address']) . "<br>";
+                                        echo "<strong>Purpose:</strong> " . htmlspecialchars($userInfo['purpose']) . "<br>";
+
+                                        // Display document if it exists
+                                        if (isset($userInfo['document']) && !empty($userInfo['document'])) {
+                                            echo "<strong>Document:</strong><br>";
+                                            echo "<div style='position: relative; width: 100%; height: 400px; overflow: hidden;'>";
+                                            echo "<img src='" . htmlspecialchars($userInfo['document']) . "' style='width: 100%; height: 100%; object-fit: cover; position: absolute;' alt='User Document'>";
+                                            echo "</div><br>";
+                                        } else {
+                                            echo "<strong>Document:</strong> No document uploaded.<br>";
+                                        }
+                                        ?>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                             <?php endwhile; ?>
                         <?php else: ?>
-                            <tr><td colspan="5">No pending requests found.</td></tr>
+                            <tr><td colspan="5">No pending users found.</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -296,8 +285,7 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
 
                 <!-- History Section -->
                 <h3 id="history">History</h3>
-                <p>View approved and declined users here.</p>
-                <h4>Approved Users</h4>
+                <p>Approved Users:</p>
                 <table class="table table-striped">
                     <thead>
                         <tr>
@@ -309,12 +297,12 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                     </thead>
                     <tbody>
                         <?php if ($approvedUsersResult->num_rows > 0): ?>
-                            <?php while ($user = $approvedUsersResult->fetch_assoc()): ?>
+                            <?php while ($approvedUser = $approvedUsersResult->fetch_assoc()): ?>
                                 <tr>
-                                    <td><?php echo $user['id']; ?></td>
-                                    <td><?php echo $user['firstname']; ?></td>
-                                    <td><?php echo $user['lastname']; ?></td>
-                                    <td><?php echo $user['email']; ?></td>
+                                    <td><?php echo $approvedUser['id']; ?></td>
+                                    <td><?php echo $approvedUser['firstname']; ?></td>
+                                    <td><?php echo $approvedUser['lastname']; ?></td>
+                                    <td><?php echo $approvedUser['email']; ?></td>
                                 </tr>
                             <?php endwhile; ?>
                         <?php else: ?>
@@ -323,7 +311,7 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                     </tbody>
                 </table>
 
-                <h4>Declined Users</h4>
+                <p>Declined Users:</p>
                 <table class="table table-striped">
                     <thead>
                         <tr>
@@ -335,12 +323,12 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                     </thead>
                     <tbody>
                         <?php if ($declinedUsersResult->num_rows > 0): ?>
-                            <?php while ($user = $declinedUsersResult->fetch_assoc()): ?>
+                            <?php while ($declinedUser = $declinedUsersResult->fetch_assoc()): ?>
                                 <tr>
-                                    <td><?php echo $user['id']; ?></td>
-                                    <td><?php echo $user['firstname']; ?></td>
-                                    <td><?php echo $user['lastname']; ?></td>
-                                    <td><?php echo $user['email']; ?></td>
+                                    <td><?php echo $declinedUser['id']; ?></td>
+                                    <td><?php echo $declinedUser['firstname']; ?></td>
+                                    <td><?php echo $declinedUser['lastname']; ?></td>
+                                    <td><?php echo $declinedUser['email']; ?></td>
                                 </tr>
                             <?php endwhile; ?>
                         <?php else: ?>
@@ -348,24 +336,16 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                         <?php endif; ?>
                     </tbody>
                 </table>
-
-                <hr>
-
-                <!-- Settings Section -->
-                <h3 id="settings">Settings</h3>
-                <p>Here you can configure various system settings for the admin panel.</p>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-    // Show the add account form when the button is clicked
-    document.getElementById('addAccountBtn').addEventListener('click', function() {
-        const form = document.getElementById('addAccountForm');
-        form.style.display = form.style.display === 'none' ? 'block' : 'none'; // Toggle form visibility
-    });
+        document.getElementById('addAccountBtn').onclick = function() {
+            var form = document.getElementById('addAccountForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        };
     </script>
 </body>
 </html>
