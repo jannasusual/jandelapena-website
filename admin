@@ -3,7 +3,17 @@ include("connection.php");
 session_start();
 
 // Check if the user is logged in, otherwise redirect to login page
+if (!isset($_SESSION['email'])) {
+    header("Location: login.php");
+    exit();
+}
 
+
+if ($_SESSION['email'] !== "admin@gmail.com") {
+    // If the user is not the admin, redirect them to the user dashboard
+    header("Location: userdashboards.php");
+    exit();
+}
 // Logout logic
 
 
@@ -82,29 +92,20 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
     <style>
         /* Sidebar styles */
         .sidebar {
-            height: 100%;
+            height: 100vh;
             background-color: #343a40;
             padding-top: 20px;
             transition: all 0.3s;
             position: fixed;
-            overflow: auto;
             width: 300px;
-
-
-            
         }
 
- 
         .sidebar a {
             color: white;
-            display: flex;
+            display: block;
             padding: 15px;
             text-decoration: none;
             border-radius: 0.25rem;
-            justify-content: center;
-            justify-content: start;
-            column-gap: 10px;
-           
         }
 
         .sidebar a:hover {
@@ -117,7 +118,6 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
             padding: 20px;
             transition: all 0.3s;
             margin-left: 300px;
-         
         }
 
         .table th, .table td {
@@ -129,9 +129,7 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
             height: auto;
         }
 
-        
-
-
+       
     </style>
 </head>
 <body>
@@ -140,7 +138,7 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
             <!-- Sidebar -->
             <nav class="col-md-2 sidebar">
                 <h4 class="text-white text-center mb-4">Admin Dashboard</h4>
-                <a href="#dashboard"><i class="fas fa-tachometer-alt sidebar-text"></i> Dashboard</a>
+                <a href="#dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <a href="#manage-users"><i class="fas fa-users"></i> Manage Users</a>
                 <a href="#activities"><i class="fas fa-tasks"></i> Activities</a>
                 <a href="#history"><i class="fas fa-history"></i> History</a>
@@ -168,9 +166,9 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                     </div>
                     <div class="card-body">
                       
-                <!-- Manage Users Section -->
-                <h3 id="manage-users">Create Account For User</h3>
-                            
+<!-- Manage Users Section -->
+<h3 id="manage-users">Create Account For User</h3>
+              
 
                 <!-- Add Account Button -->
                 <button class="btn btn-primary mb-3" id="addAccountBtn"><i class="fas fa-plus"></i> Add Account</button>
