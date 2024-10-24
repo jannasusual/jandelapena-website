@@ -8,12 +8,14 @@ if (!isset($_SESSION['email'])) {
     exit();
 }
 
-// Logout logic
-if (isset($_POST['logout'])) {
-    session_destroy();
-    header("Location: login.php");
+
+if ($_SESSION['email'] !== "admin@gmail.com") {
+    // If the user is not the admin, redirect them to the user dashboard
+    header("Location: userdashboards.php");
     exit();
 }
+// Logout logic
+
 
 // Handle new account form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['newEmail'], $_POST['newPassword'])) {
@@ -94,6 +96,8 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
             background-color: #343a40;
             padding-top: 20px;
             transition: all 0.3s;
+            position: fixed;
+            width: 300px;
         }
 
         .sidebar a {
@@ -113,6 +117,7 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
         .content {
             padding: 20px;
             transition: all 0.3s;
+            margin-left: 300px;
         }
 
         .table th, .table td {
@@ -150,21 +155,32 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                 <a href="#activities"><i class="fas fa-tasks"></i> Activities</a>
                 <a href="#history"><i class="fas fa-history"></i> History</a>
                 <a href="#settings"><i class="fas fa-cogs"></i> Settings</a>
-                <form method="POST" class="text-center mt-4">
+                <form method="POST" action="logout.php" class="text-center mt-4">
                     <button type="submit" name="logout" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
                 </form>
             </nav>
 
+
+
             <!-- Content area -->
             <div class="col-md-10 content">
-                <h2 id="dashboard">Welcome, <?php echo htmlspecialchars($_SESSION['email']); ?>!</h2>
-                <p>This is your admin dashboard where you can manage users, view user accounts, configure settings, and more.</p>
 
+            <div class="card-body">
+            <h2 id="dashboard"> Barangay Connect </h2>
+                      </div>
+  
+               
                 <hr>
 
-                <!-- Manage Users Section -->
-                <h3 id="manage-users">Manage Users</h3>
-                <p>Here you can view and manage registered users.</p>
+                <div class="card mb-4" id="history">
+                    <div class="card-header">
+                        <h5><i class="fas fa-users"></i> Manage Users</h5>
+                    </div>
+                    <div class="card-body">
+                      
+<!-- Manage Users Section -->
+<h3 id="manage-users">Create Account For User</h3>
+              
 
                 <!-- Add Account Button -->
                 <button class="btn btn-primary mb-3" id="addAccountBtn"><i class="fas fa-plus"></i> Add Account</button>
@@ -186,7 +202,16 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
 
                 <hr>
 
+
+                <div class="card mb-4" id="history">
+                    <div class="card-header">
+                        <h5><i class="fas fa-user"></i> Registered Users</h5>
+                    </div>
+                    <div class="card-body">
+                      
+
                 <!-- Example table to display users (for login accounts) -->
+
                 <table class="table table-striped table-hover">
                     <thead>
                         <tr>
@@ -218,12 +243,25 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                     </tbody>
                 </table>
 
+
+                    </div>
+                </div>
+
+
+
+                    </div>
+                </div>
+
                 <hr>
 
-                <!-- Activities Section -->
-                <h3 id="activities">Activities</h3>
-                <p>Manage user activities here.</p>
-                <table class="table table-striped table-hover">
+                    <!-- Activities Section -->
+                <div class="card mb-4" id="history">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tasks"></i> Activities</h5>
+                    </div>
+                    <div class="card-body">
+                      
+                    <table class="table table-striped table-hover">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -275,7 +313,7 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                                                         echo "<strong>Birthdate:</strong> " . htmlspecialchars($userInfo['birthdate']) . "<br>";
                                                         echo "<strong>Age:</strong> " . htmlspecialchars($userInfo['age']) . "<br>";
                                                         echo "<strong>Civil Status:</strong> " . htmlspecialchars($userInfo['civil_status']) . "<br>";
-                                                        echo "<strong>Status:</strong> " . htmlspecialchars($userInfo['status']) . "<br>";
+                                                       
                                                         echo "<strong>Address:</strong> " . htmlspecialchars($userInfo['address']) . "<br>";
                                                         echo "<strong>Purpose:</strong> " . htmlspecialchars($userInfo['purpose']) . "<br>";
 
@@ -288,6 +326,7 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                                                         } else {
                                                             echo "<strong>Document:</strong> No document uploaded.<br>";
                                                         }
+                                                        echo "<strong>Status:</strong> " . htmlspecialchars($userInfo['status']) . "<br>";
                                                         ?>
                                                     </div>
                                                     <div class="modal-footer">
@@ -304,6 +343,12 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                         <?php endif; ?>
                     </tbody>
                 </table>
+                    
+                    </div>
+                </div>
+
+          
+                
 
                 <hr>
 
@@ -313,7 +358,8 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                         <h5><i class="fas fa-history"></i> History</h5>
                     </div>
                     <div class="card-body">
-                        <p>View the history of approved and declined users.</p>
+
+                    <p>View the history of approved and declined users.</p>
                         <ul class="nav nav-tabs" id="myTab" role="tablist">
                             <li class="nav-item">
                                 <a class="nav-link active" id="approved-tab" data-bs-toggle="tab" href="#approved" role="tab" aria-controls="approved" aria-selected="true">Approved</a>
@@ -334,15 +380,64 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php while ($approvedUser = $approvedUsersResult->fetch_assoc()) { ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($approvedUser['id']); ?></td>
-                                                <td><?php echo htmlspecialchars($approvedUser['firstname']); ?></td>
-                                                <td><?php echo htmlspecialchars($approvedUser['lastname']); ?></td>
-                                                <td><?php echo htmlspecialchars($approvedUser['email']); ?></td>
-                                            </tr>
-                                        <?php } ?>
-                                    </tbody>
+                                <?php if ($approvedUsersResult->num_rows > 0): ?>
+                                    <?php while ($user = $approvedUsersResult->fetch_assoc()): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($user['id']); ?></td>
+                                            <td><?php echo htmlspecialchars($user['firstname']); ?></td>
+                                            <td><?php echo htmlspecialchars($user['lastname']); ?></td>
+                                            <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewApprovedUserModal<?php echo $user['id']; ?>"><i class="fas fa-eye"></i> View</button>
+
+                                                <!-- Modal for viewing approved user info -->
+                                                <div class="modal fade" id="viewApprovedUserModal<?php echo $user['id']; ?>" tabindex="-1" aria-labelledby="viewApprovedUserModalLabel" aria-hidden="true">
+                                                    <div class="modal-dialog modal-lg">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="viewApprovedUserModalLabel">User Information</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <?php
+                                                                // Fetch additional approved user info for the modal
+                                                                $approvedUserInfoQuery = $conn->prepare("SELECT * FROM users WHERE id = ?");
+                                                                $approvedUserInfoQuery->bind_param("i", $user['id']);
+                                                                $approvedUserInfoQuery->execute();
+                                                                $approvedUserInfoResult = $approvedUserInfoQuery->get_result();
+                                                                $approvedUserInfo = $approvedUserInfoResult->fetch_assoc();
+
+                                                                // Display user details
+                                                                echo "<strong>First Name:</strong> " . htmlspecialchars($approvedUserInfo['firstname']) . "<br>";
+                                                                echo "<strong>Last Name:</strong> " . htmlspecialchars($approvedUserInfo['lastname']) . "<br>";
+                                                                echo "<strong>Middle Name:</strong> " . htmlspecialchars($approvedUserInfo['middle_name']) . "<br>";
+                                                                echo "<strong>Email:</strong> " . htmlspecialchars($approvedUserInfo['email']) . "<br>";
+                                                                echo "<strong>Contact Number:</strong> " . htmlspecialchars($approvedUserInfo['contactnumber']) . "<br>";
+                                                                echo "<strong>Birthdate:</strong> " . htmlspecialchars($approvedUserInfo['birthdate']) . "<br>";
+                                                                echo "<strong>Age:</strong> " . htmlspecialchars($approvedUserInfo['age']) . "<br>";
+                                                                echo "<strong>Gender:</strong> " . htmlspecialchars($approvedUserInfo['gender']) . "<br>";
+                                                                echo "<strong>Civil Status:</strong> " . htmlspecialchars($approvedUserInfo['civil_status']) . "<br>";
+                                                                echo "<strong>Purpose:</strong> " . htmlspecialchars($approvedUserInfo['purpose']) . "<br>";
+                                                                echo "<strong>Address:</strong> " . htmlspecialchars($approvedUserInfo['address']) . "<br>";
+
+                                                            
+                                                                ?>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="5" class="text-center">No approved users found.</td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
                                 </table>
                             </div>
                             <div class="tab-pane fade" id="declined" role="tabpanel" aria-labelledby="declined-tab">
@@ -356,18 +451,67 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php while ($declinedUser = $declinedUsersResult->fetch_assoc()) { ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($declinedUser['id']); ?></td>
-                                                <td><?php echo htmlspecialchars($declinedUser['firstname']); ?></td>
-                                                <td><?php echo htmlspecialchars($declinedUser['lastname']); ?></td>
-                                                <td><?php echo htmlspecialchars($declinedUser['email']); ?></td>
-                                            </tr>
-                                        <?php } ?>
-                                    </tbody>
+                                <?php if ($declinedUsersResult->num_rows > 0): ?>
+                                    <?php while ($user = $declinedUsersResult->fetch_assoc()): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($user['id']); ?></td>
+                                            <td><?php echo htmlspecialchars($user['firstname']); ?></td>
+                                            <td><?php echo htmlspecialchars($user['lastname']); ?></td>
+                                            <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewDeclinedUserModal<?php echo $user['id']; ?>"><i class="fas fa-eye"></i> View</button>
+
+                                                <!-- Modal for viewing declined user info -->
+                                                <div class="modal fade" id="viewDeclinedUserModal<?php echo $user['id']; ?>" tabindex="-1" aria-labelledby="viewDeclinedUserModalLabel" aria-hidden="true">
+                                                    <div class="modal-dialog modal-lg">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="viewDeclinedUserModalLabel">User Information</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <?php
+                                                                // Fetch additional declined user info for the modal
+                                                                $declinedUserInfoQuery = $conn->prepare("SELECT * FROM users WHERE id = ?");
+                                                                $declinedUserInfoQuery->bind_param("i", $user['id']);
+                                                                $declinedUserInfoQuery->execute();
+                                                                $declinedUserInfoResult = $declinedUserInfoQuery->get_result();
+                                                                $declinedUserInfo = $declinedUserInfoResult->fetch_assoc();
+
+                                                                // Display user details
+                                                                echo "<strong>First Name:</strong> " . htmlspecialchars($declinedUserInfo['firstname']) . "<br>";
+                                                                echo "<strong>Last Name:</strong> " . htmlspecialchars($declinedUserInfo['lastname']) . "<br>";
+                                                                echo "<strong>Middle Name:</strong> " . htmlspecialchars($declinedUserInfo['middle_name']) . "<br>";
+                                                                echo "<strong>Email:</strong> " . htmlspecialchars($declinedUserInfo['email']) . "<br>";
+                                                                echo "<strong>Contact Number:</strong> " . htmlspecialchars($declinedUserInfo['contactnumber']) . "<br>";
+                                                                echo "<strong>Birthdate:</strong> " . htmlspecialchars($declinedUserInfo['birthdate']) . "<br>";
+                                                                echo "<strong>Age:</strong> " . htmlspecialchars($declinedUserInfo['age']) . "<br>";
+                                                                echo "<strong>Gender:</strong> " . htmlspecialchars($declinedUserInfo['gender']) . "<br>";
+                                                                echo "<strong>Civil Status:</strong> " . htmlspecialchars($declinedUserInfo['civil_status']) . "<br>";
+                                                                echo "<strong>Purpose:</strong> " . htmlspecialchars($declinedUserInfo['purpose']) . "<br>";
+                                                                echo "<strong>Address:</strong> " . htmlspecialchars($declinedUserInfo['address']) . "<br>";
+    
+                                                                ?>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="5" class="text-center">No declined users found.</td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
                                 </table>
                             </div>
                         </div>
+                      
                     </div>
                 </div>
             </div>
@@ -388,4 +532,6 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
 
 <?php
 $conn->close(); // Close the database connection
+session_destroy();
+
 ?>
