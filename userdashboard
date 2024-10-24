@@ -1,3 +1,16 @@
+<?php
+
+session_start(); // Start the session
+include("connection.php");
+
+// Check if the user is logged in by verifying the session
+if (!isset($_SESSION['email'])) {
+    header("Location: login.php");
+    exit();
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -137,9 +150,10 @@
       <li class="nav-item">
         <a class="nav-link" href="help.php">Help</a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="login.php">Logout</a>
-      </li>
+      <form method="POST" action="logout.php" style="display:inline;">
+    <button type="submit" class="btn btn-danger">Logout</button>
+</form>
+     
     </ul>
   </div>
 </div>
@@ -156,3 +170,9 @@
 
 </body>
 </html>
+
+<?php
+
+
+
+?>
