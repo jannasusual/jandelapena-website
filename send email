@@ -1,0 +1,22 @@
+<?php
+require 'vendor/autoload.php'; // Include the Composer autoload file
+
+// Create a new SendGrid instance
+$sendgrid = new \SendGrid(''); // Replace with your actual SendGrid API key
+
+// Create a new email
+$email = new \SendGrid\Mail\Mail(); 
+$email->setFrom("delapena.295363@cubao.sti.edu.ph", "Micko Sapinoso"); // Replace with your email and name
+$email->setSubject("Sending with SendGrid is Fun");
+$email->addTo("recipient_email@example.com", "Recipient Name"); // Replace with recipient's email and name
+$email->addContent("text/plain", "and easy to do anywhere, even with PHP"); // Email content
+$email->addContent("text/html", "<strong>and easy to do anywhere, even with PHP</strong>"); // Email content in HTML
+
+// Send the email
+try {
+    $response = $sendgrid->send($email);
+    echo 'Email sent successfully!';
+} catch (Exception $e) {
+    echo 'Caught exception: '. $e->getMessage() ."\n";
+}
+?>
