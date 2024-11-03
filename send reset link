@@ -1,0 +1,50 @@
+<?php
+session_start();
+include 'connection.php'; // Ensure this connects to your database
+require 'vendor/autoload.php'; // Include the SendGrid autoloader
+
+use SendGrid\Mail\Mail;
+
+// Check if the form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $email = $_POST['email'];
+    $otp = rand(100000, 999999); // Generate a 6-digit OTP
+
+    // Check if the email exists in the user_logins table
+    $stmt = $conn->prepare("SELECT * FROM user_logins WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        // Store the OTP and email in the password_resets table (consider adding a timeout feature)
+        $stmt = $conn->prepare("REPLACE INTO password_resets (email, token) VALUES (?, ?)");
+        $stmt->bind_param("ss", $email, $otp);
+        $stmt->execute();
+
+        // Send the OTP via email
+        $sendgrid = new \SendGrid(''); // Replace with your SendGrid API key
+        $mail = new Mail();
+        $mail->setFrom("delapena.295363@cubao.sti.edu.ph", "Micko Sapinoso");
+        $mail->setSubject("Your OTP Code");
+        $mail->addTo($email);
+        $mail->addContent("text/plain", "Your OTP code is: $otp");
+
+        try {
+            $response = $sendgrid->send($mail);
+            if ($response->statusCode() == 202) {
+                echo "OTP sent to your email. Please check your inbox.";
+                // Redirect to a page to enter OTP
+                header("Location: verify_otp.php?email=" . urlencode($email));
+                exit();
+            } else {
+                echo "Failed to send email.";
+            }
+        } catch (Exception $e) {
+            echo 'Caught exception: '. $e->getMessage();
+        }
+    } else {
+        echo "Email not found.";
+    }
+}
+?>
