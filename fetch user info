@@ -1,0 +1,26 @@
+<?php
+include("connection.php");
+
+if (isset($_GET['id'])) {
+    $userId = $_GET['id'];
+    
+    // Prepare and execute the query to fetch user information
+    $stmt = $conn->prepare("SELECT firstname, lastname, middle_name, email, contactnumber, birthdate, age, gender, civil_status, purpose, address, document FROM users WHERE id = ?");
+    $stmt->bind_param("i", $userId);
+    
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
+            echo json_encode($result->fetch_assoc());
+        } else {
+            echo json_encode([]);
+        }
+    } else {
+        echo json_encode([]);
+    }
+    
+    $stmt->close();
+}
+
+$conn->close();
+?>
