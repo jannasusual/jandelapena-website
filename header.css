@@ -1,0 +1,240 @@
+body {
+  font-family: Arial, sans-serif;
+  padding-top: 58px;
+  background-color: white;
+  color: #333;
+}
+
+
+
+/* Content Section */
+.content-section {
+  padding: 60px 15px;
+  background-color: white;
+  color: white;
+  min-height: 80vh; /* Match the min-height to the hero section */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.content-section h2 {
+  text-align: center;
+  color: #28a745;
+}
+
+.card {
+  background-color: #213A57;
+  color: white;
+  border-radius: 15px;
+  padding: 20px;
+  margin: 10px;
+  transition: transform 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.service-card {
+  background-color: #213A57;
+  color: white;
+  border-radius: 15px;
+  padding: 20px;
+  transition: box-shadow 0.3s, transform 0.3s;
+  text-align: center;
+  height: 200px;
+}
+
+.service-card:hover {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-10px);
+}
+
+/* Adjust image size */
+.about-image,
+.service-image {
+  width: 100%;  /* Makes the image responsive */
+  height: auto; /* Maintains aspect ratio */
+  max-height: 300px; /* Set a max-height for consistency */
+  object-fit: cover; /* Ensures the image covers the area without distortion */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+ 
+  .navbar-title {
+    font-size: 1.3rem;
+  }
+
+  .home-title {
+    font-size: 2rem;
+  }
+
+  .card {
+    margin: 10px auto;
+  }
+}
+
+
+
+
+.carousel-inner img {
+height: 100%; /* Ensures the images fill the height */
+object-fit: cover; /* Ensures images cover the area without distortion */
+}
+
+
+
+/* Navbar styling */
+.header-section {
+  background-color: #213A57;
+  height: 80px;
+}
+
+.navbar {
+  background-color: #213A57;
+  color: white;
+}
+
+.navbar img {
+  width: 50px;
+  height: 50px;
+  border-radius: 30px;
+}
+
+.navbar-title {
+  font-weight: bold;
+  font-size: 40px;
+
+}
+
+.navbar a {
+  color: white;
+  margin: 0 15px;
+  font-size: 1.1rem;
+  transition: color 0.3s;
+}
+
+.navbar a:hover {
+  color: black;
+}
+
+/* home Section */
+.home-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: whitesmoke;
+  text-align: center;
+}
+
+.navbar-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.navbar-nav .nav-link {
+  color: #fff;
+  margin: 0 10px;
+  text-align: center;
+}
+
+.navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M1.5 12.5a.5.5 0 010-1h13a.5.5 0 010 1h-13zm0-4a.5.5 0 010-1h13a.5.5 0 010 1h-13zm0-4a.5.5 0 010-1h13a.5.5 0 010 1h-13z'/%3E%3C/svg%3E");
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .navbar-title {
+      font-size: 1.3rem;
+  }
+
+  .navbar-collapse {
+    background-color: #213A57;
+  }
+
+  .navbar-nav {
+      text-align: center;
+      position: fixed;
+      right: 0;
+      left: 0;
+      background-color: #134b5f;
+
+  }
+
+  .navbar-nav .nav-item {
+      display: block;
+      width: 100%;
+  }
+
+  .navbar-toggler-icon {
+      color: #fff;
+  }
+}
+
+
+
+/* Offcanvas Header Styling */
+.offcanvas-header {
+  background-color: #213A57; /* Dark green */
+  color: white;
+  border-bottom: 2px solid #134b5f; /* Adding a subtle border for distinction */
+}
+
+.offcanvas-title {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+/* Offcanvas Body Background */
+.offcanvas-body {
+  background-color: #134b5f; /* Darker shade for the body */
+  color: white;
+  padding-top: 20px;
+}
+
+/* Offcanvas Menu Styling */
+.offcanvas-menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.offcanvas-menu-item {
+  margin: 15px 0;
+}
+
+.offcanvas-link {
+  color: #f0f0f0;
+  font-size: 1.2rem;
+  text-decoration: none;
+  padding: 10px;
+  display: block;
+  border-radius: 5px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.offcanvas-link:hover {
+  background-color: gray;
+  color: #fff;
+}
+
+/* Logout Button Styling */
+.offcanvas-logout-btn {
+  font-size: 1.2rem;
+  padding: 8px 20px;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.offcanvas-logout-btn:hover {
+  background-color: #c82333;
+}
+
