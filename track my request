@@ -1,0 +1,110 @@
+<?php
+include 'connection.php';
+session_start();
+
+$email = $_SESSION['email']; // Assuming email is stored in the session
+
+$sql = "SELECT * FROM document_requests WHERE email = ?"; 
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$result = $stmt->get_result();
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Track My Request</title>
+  <link rel="stylesheet" href="header.css">
+
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"> 
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+ <style>
+ body {
+            background-color: #f8f9fa;
+            padding-top: 70px;
+        }
+       
+       
+        body {
+      background-color: #f8f9fa;
+      padding-top: 70px;
+    }
+   
+    .nav-tabs {
+      margin-bottom: 20px;
+    }
+  
+    .header-section{
+      background-color: #213A57;
+    }
+
+   
+ </style>
+</head>
+<body>
+
+<nav class="header-section navbar navbar-expand-lg fixed-top">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center">
+          <a href="userdashboards.php"><img src="bconnect_logo.jpg" alt="Logo" class="me-2">
+        </a>
+
+        <a class="navbar-brand" href="userdashboards.php">Barangay Connect</a>
+            
+     
+        </div>
+ 
+    </div>
+</nav>
+
+
+
+<div class="container mt-5">
+    <h1 class="mb-4">Track My Request</h1>
+    
+    <?php if ($result->num_rows > 0): ?>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Document Type</th>
+                    <th>Appointment Date</th>
+                    <th>Appointment Time</th>
+                    <th>Request Date</th>
+                    <th>Delivery Method</th>
+                    <th>Status</th>
+             
+                </tr>
+            </thead>
+            <tbody>
+                        <?php while ($row = $result->fetch_assoc()): ?>
+                        <tr>
+                        <td><?php echo htmlspecialchars($row['document_type']); ?></td>
+                        <td><?php echo htmlspecialchars($row['appointment_date']); ?></td>
+                        <td><?php echo htmlspecialchars($row['appointment_time']); ?></td>
+                        <td><?php echo htmlspecialchars($row['request_date']); ?></td>
+                        <td><?php echo htmlspecialchars($row['delivery_method']); ?></td>
+                        <td><?php echo htmlspecialchars($row['status']); ?></td>
+                    </tr>
+                <?php endwhile; ?>
+            </tbody>
+        </table>
+    <?php else: ?>
+        <div class="alert alert-warning">No document requests found.</div>
+    <?php endif; ?>
+
+    <a href="userdashboards.php" class="btn btn-primary mt-4">Back to Dashboard</a>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</body>
+</body>
+</html>
+
+<?php $stmt->close(); $conn->close(); ?>
