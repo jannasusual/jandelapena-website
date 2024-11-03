@@ -1,17 +1,54 @@
+<?php
+session_start();
+include("connection.php");
+
+// Check if the user is logged in
+if (!isset($_SESSION['email'])) {
+    die("Access denied. Please log in.");
+}
+
+// Check if form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Assuming the user is already logged in and their email is stored in the session
+    $email = $_SESSION['email']; // Get the logged-in user's email
+
+    // Prepare other fields from your form (e.g., appointment_date, appointment_time, etc.)
+    $appointment_date = $_POST['appointmentDate']; // Change to match input names
+    $appointment_time = $_POST['appointmentTime']; // Change to match input names
+    $document_type = $_POST['documentType']; // Change to match input names
+    $delivery_method = $_POST['deliveryMethod']; // Change to match input names
+
+    // Insert into document_requests table
+    $query = "INSERT INTO document_requests (appointment_date, appointment_time, document_type, delivery_method, request_date, email) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP(), ?)";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("sssss", $appointment_date, $appointment_time, $document_type, $delivery_method, $email);
+
+    if ($stmt->execute()) {
+        echo "Request submitted successfully.";
+    } else {
+        echo "Error: " . $stmt->error;
+    }
+
+    $stmt->close();
+}
+
+// Close the connection
+$conn->close();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Request</title>
 
-  
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <style>
-
-.hidden {
+    <style>
+       
+        .hidden {
             display: none;
         }
 
@@ -69,11 +106,11 @@
       padding: 10px 0;
       border-bottom: 1px solid #e9ecef;
     }
-    
-  </style>
-
+    </style>
 </head>
 <body>
+
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: #213A57;">
     <div class="container-fluid">
         <a class="navbar-brand" href="userdashboards.php">Barangay Connect</a>
@@ -91,13 +128,138 @@
     </div>
 </nav>
 
+<div class="container mt-5">
+    <!-- Step 1: Scheduling Section -->
+    <div class="step-section" id="step1">
+        <h3>Step 1: Schedule an Appointment</h3>
+        <form id="schedulingForm">
+            <div class="mb-3">
+                <label for="appointmentDate" class="form-label">Select Date</label>
+                <input type="date" class="form-control" id="appointmentDate" required>
+            </div>
+            <div class="mb-3">
+                <label for="appointmentTime" class="form-label">Select Time</label>
+                <input type="time" class="form-control" id="appointmentTime" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Proceed to Step 2</button>
+        </form>
+    </div>
 
+    <!-- Step 2: Document Selection Section -->
+    <div class="step-section hidden" id="step2">
+        <h3>Step 2: Select a Document</h3>
+        <p>Choose the document you would like to request:</p>
+        <ul>
+            <li><input type="radio" name="document" id="barangayCert" value="Barangay Certificate"> Barangay Certificate</li>
+            <li><input type="radio" name="document" id="barangayID" value="Barangay ID"> Barangay ID</li>
+            <li><input type="radio" name="document" id="residencyCert" value="Residency Certificate"> Residency Certificate</li>
+            <li><input type="radio" name="document" id="barangayClearance" value="Barangay Clearance"> Barangay Clearance</li>
+        </ul>
+        <button class="btn btn-secondary" onclick="goBackToStep1()">Back to Step 1</button>
+        <button class="btn btn-primary" onclick="proceedToStep3()">Proceed to Step 3</button>
+        <p id="documentWarning" class="text-danger mt-2 hidden">Please select a document to proceed.</p>
+    </div>
 
+    <!-- Step 3: Delivery Method Selection Section -->
+    <div class="step-section hidden" id="step3">
+        <h3>Step 3: Choose Delivery Method</h3>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="delivery" id="deliveryCOD" value="Cash on Delivery">
+            <label class="form-check-label" for="deliveryCOD">Cash on Delivery</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="delivery" id="deliveryPickup" value="Pick Up">
+            <label class="form-check-label" for="deliveryPickup">Pick Up</label>
+        </div>
+        
+        <!-- Back Button -->
+        <button class="btn btn-secondary" onclick="backToStep2()">Back to Step 2</button>
+        
+        <!-- Proceed to Summary Button -->
+        <button class="btn btn-primary" onclick="showSummary()">Submit</button>
+    </div>
 
+    <!-- Summary Section -->
+    <div class="step-section hidden" id="summary">
+        <h3>Summary</h3>
+        <p><strong>Appointment Date:</strong> <span id="summaryDate"></span></p>
+        <p><strong>Appointment Time:</strong> <span id="summaryTime"></span></p>
+        <p><strong>Selected Document:</strong> <span id="summaryDocument"></span></p>
+        <p><strong>Delivery Method:</strong> <span id="summaryDelivery"></span></p>
+        
+        <!-- Back Button -->
+        <button class="btn btn-secondary" onclick="backToStep3()">Back to Step 3</button>
+        
+        <!-- Finish Button (Submits the form) -->
+        <form action="" method="POST" style="display: inline;">
+            <input type="hidden" name="appointmentDate" id="inputDate">
+            <input type="hidden" name="appointmentTime" id="inputTime">
+            <input type="hidden" name="documentType" id="inputDocument">
+            <input type="hidden" name="deliveryMethod" id="inputDelivery">
+            <button type="submit" class="btn btn-success">Finish</button>
+        </form>
+    </div>
 
+</div>
 
+<script>
+    document.getElementById("schedulingForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+        document.getElementById("step1").classList.add("hidden");
+        document.getElementById("step2").classList.remove("hidden");
+    });
 
+    function goBackToStep1() {
+        document.getElementById("step2").classList.add("hidden");
+        document.getElementById("step1").classList.remove("hidden");
+    }
 
-  
+    function proceedToStep3() {
+        const selectedDocument = document.querySelector('input[name="document"]:checked');
+        if (!selectedDocument) {
+            document.getElementById("documentWarning").classList.remove("hidden");
+        } else {
+            document.getElementById("documentWarning").classList.add("hidden");
+            document.getElementById("step2").classList.add("hidden");
+            document.getElementById("step3").classList.remove("hidden");
+        }
+    }
+
+    function backToStep2() {
+        document.getElementById("step3").classList.add("hidden");
+        document.getElementById("step2").classList.remove("hidden");
+    }
+
+    function showSummary() {
+        const appointmentDate = document.getElementById("appointmentDate").value;
+        const appointmentTime = document.getElementById("appointmentTime").value;
+        const selectedDocument = document.querySelector('input[name="document"]:checked');
+        const deliveryMethod = document.querySelector('input[name="delivery"]:checked');
+
+        if (!deliveryMethod) {
+            alert("Please select a delivery method to proceed.");
+            return;
+        }
+
+        document.getElementById("summaryDate").innerText = appointmentDate;
+        document.getElementById("summaryTime").innerText = appointmentTime;
+        document.getElementById("summaryDocument").innerText = selectedDocument.value;
+        document.getElementById("summaryDelivery").innerText = deliveryMethod.value;
+
+        // Set hidden input values
+        document.getElementById("inputDate").value = appointmentDate;
+        document.getElementById("inputTime").value = appointmentTime;
+        document.getElementById("inputDocument").value = selectedDocument.value;
+        document.getElementById("inputDelivery").value = deliveryMethod.value;
+
+        document.getElementById("step3").classList.add("hidden");
+        document.getElementById("summary").classList.remove("hidden");
+    }
+
+    function backToStep3() {
+        document.getElementById("summary").classList.add("hidden");
+        document.getElementById("step3").classList.remove("hidden");
+    }
+</script>
 </body>
 </html>
