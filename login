@@ -2,8 +2,6 @@
 session_start();
 include("connection.php");
 
-
-
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
@@ -120,6 +118,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </form>
 
     <div class="text-center mt-3">
+        <a href="forgot_password.php">Forgot Password?</a> <!-- Forgot Password Link -->
+    </div>
+    <div class="text-center mt-2">
         <a href="signup.php">Don't have an account? Sign up</a>
     </div>
 </div>
