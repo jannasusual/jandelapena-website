@@ -1,0 +1,27 @@
+<?php
+session_start();
+include 'connection.php';
+
+// Check if the form is submitted
+if (isset($_POST['ready'])) {
+    $email = $_POST['email'];
+    $document_type = $_POST['document_type'];
+
+    // Update the status of the request to 'ready'
+    $query_update = "UPDATE document_requests SET status = 'ready' WHERE email = ? AND document_type = ?";
+    
+    if ($stmt = $conn->prepare($query_update)) {
+        $stmt->bind_param("ss", $email, $document_type);
+        if ($stmt->execute()) {
+            // Redirect back to doc_activities.php after successful update
+            header("Location: doc_activities.php");
+            exit;
+        } else {
+            echo "Error updating record: " . $conn->error;
+        }
+        $stmt->close();
+    }
+}
+
+$conn->close();
+?>
