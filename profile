@@ -57,6 +57,7 @@ $stmt->close();
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="header.css">
 
   <style>
     body {
@@ -79,35 +80,32 @@ $stmt->close();
       border: 3px solid #28a745;
       cursor: pointer;
     }
-    .nav-tabs {
-      margin-bottom: 20px;
-    }
+   
     .tab-content {
       padding: 20px;
       border: 1px solid #e9ecef;
       border-radius: 8px;
       background-color: #fff;
     }
+    
   </style>
 </head>
 <body>
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-success fixed-top">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="userdashboards.php">Barangay Connect</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="userdashboards.php">Home</a></li>
-        <li class="nav-item"><a class="nav-link" href="profile.php">Profile</a></li>
-        <li class="nav-item"><a class="nav-link" href="help.php">Help</a></li>
-        <li class="nav-item"><a class="nav-link" href="logout.php">Logout</a></li>
-      </ul>
+<nav class="header-section navbar navbar-expand-lg fixed-top">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center">
+          <a href="userdashboards.php"><img src="bconnect_logo.jpg" alt="Logo" class="me-2">
+        </a>
+
+        <a class="navbar-brand" href="userdashboards.php">Barangay Connect</a>
+            
+           
+        </div>
+
+        
     </div>
-  </div>
 </nav>
 
 <!-- Profile Card Section -->
@@ -147,24 +145,27 @@ $stmt->close();
       </div>
 
       <!-- Change Password Tab -->
-      <div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
-        <h4>Change Password</h4>
-        <form id="changePasswordForm">
-          <div class="mb-3">
-            <label for="currentPassword" class="form-label">Current Password</label>
-            <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
-          </div>
-          <div class="mb-3">
-            <label for="newPassword" class="form-label">New Password</label>
-            <input type="password" class="form-control" id="newPassword" name="newPassword" required>
-          </div>
-          <div class="mb-3">
-            <label for="confirmPassword" class="form-label">Confirm New Password</label>
-            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
-          </div>
-          <button type="submit" class="btn btn-primary">Change Password</button>
-        </form>
-      </div>
+      <div class="tab-pane fade " id="password" role="tabpanel" aria-labelledby="password-tab">
+                <h4>Change Password</h4>
+                <form id="changePasswordForm">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPass" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPass" name="newPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPass" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirmPass" name="confirmPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Change Password</button>
+                </form>
+            </div>
+      
+              
+          
 
       <!-- Profile Picture Tab -->
       <div class="tab-pane fade" id="picture" role="tabpanel" aria-labelledby="picture-tab">
@@ -204,7 +205,44 @@ $stmt->close();
       uploadAlert.style.display = 'none';
     }, 3000);
   }
-</script>
+  
+  document.getElementById("changePasswordForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    let currentPassword = document.getElementById("currentPassword").value;
+    let newPassword = document.getElementById("newPass").value;
+    let confirmPassword = document.getElementById("confirmPass").value;
+
+    if (newPassword !== confirmPassword) {
+        alert("New password and confirm password do not match.");
+        return;
+    }
+
+    // AJAX request to PHP
+    fetch("change_password.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("Password changed successfully.");
+            document.getElementById("changePasswordForm").reset();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => console.error("Error:", error));
+});
+ 
+    </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 
 </body>
 </html>
