@@ -138,7 +138,7 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                      <i class="fas fa-file-alt"></i> Document Activities
                   </a>
                   <a href="admin_announcement.php"><i class="fas fa-bullhorn"></i> Announcement</a>
-                <a href="#settings"><i class="fas fa-cogs"></i> Settings</a>
+               
                 <form method="POST" action="logout.php" class="text-center mt-4">
                     <button type="submit" name="logout" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
                 </form>
