@@ -2,115 +2,118 @@
 include("connection.php");
 session_start();
 
+
 // Check if the user is logged in, otherwise redirect to login page
 if (!isset($_SESSION['email'])) {
-  header("Location: login.php");
-   exit();
-}
-
-
-if ($_SESSION['email'] !== "admin@gmail.com") {
-     //If the user is not the admin, redirect them to the user dashboard
-   header("Location: userdashboards.php");  
-    exit();
-}
-// Logout logic
-
-
-// Handle new account form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['newEmail'], $_POST['newPassword'])) {
-    $newEmail = $_POST['newEmail'];
-    $newPassword = $_POST['newPassword'];
-
-    // Check if the email already exists
-    $checkEmailQuery = $conn->prepare("SELECT email FROM user_logins WHERE email = ?");
-    $checkEmailQuery->bind_param("s", $newEmail);
-    $checkEmailQuery->execute();
-    $checkResult = $checkEmailQuery->get_result();
-
-    if ($checkResult->num_rows > 0) {
-      
-        echo "  
-        <div id='emailErrorAlert' class='alert alert-danger fixed-top' role='alert' z-index: 1050;'>
-         Email already exists.
-    </div>
-    <script>
-        // Set a timer to hide the alert after 2 seconds
-        setTimeout(function() {
-            var alert = document.getElementById('emailErrorAlert');
-            if (alert) {
-                alert.style.display = 'none'; // Hide the alert
-            }
-        }, 2000); // 2000 milliseconds = 2 seconds
-    </script>
-    ";
-    } else {
-        // Hash the password
-        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-
-        // Insert the new user into the database
-        $stmt = $conn->prepare("INSERT INTO user_logins (email, password) VALUES (?, ?)");
-        $stmt->bind_param("ss", $newEmail, $hashedPassword);
-
-        if ($stmt->execute()) { 
-            echo "
-
-             <div id='successAlert' class='alert alert-success fixed-top' role='alert' z-index: 1050;'>
-         New account created successfully.
-    </div>
-    <script>
-        // Set a timer to hide the alert after 2 seconds
-        setTimeout(function() {
-            var alert = document.getElementById('successAlert');
-            if (alert) {
-                alert.style.display = 'none'; // Hide the alert
-            }
-        }, 2000); // 2000 milliseconds = 2 seconds
-    </script>
+    header("Location: index.php");
+     exit();
+  }
+  
+  
+  if ($_SESSION['email'] !== "admin@gmail.com") {
+       //If the user is not the admin, redirect them to the user dashboard
+     header("Location: userdashboards.php");  
+      exit();
+  }
+  // Logout logic
+  
+  
+  // Handle new account form submission
+  if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['newEmail'], $_POST['newPassword'])) {
+      $newEmail = $_POST['newEmail'];
+      $newPassword = $_POST['newPassword'];
+  
+      // Check if the email already exists
+      $checkEmailQuery = $conn->prepare("SELECT email FROM user_logins WHERE email = ?");
+      $checkEmailQuery->bind_param("s", $newEmail);
+      $checkEmailQuery->execute();
+      $checkResult = $checkEmailQuery->get_result();
+  
+      if ($checkResult->num_rows > 0) {
+        
+          echo "  
+          <div id='emailErrorAlert' class='alert alert-danger fixed-top' role='alert' z-index: 1050;'>
+           Email already exists.
+      </div>
+      <script>
+          // Set a timer to hide the alert after 2 seconds
+          setTimeout(function() {
+              var alert = document.getElementById('emailErrorAlert');
+              if (alert) {
+                  alert.style.display = 'none'; // Hide the alert
+              }
+          }, 2000); // 2000 milliseconds = 2 seconds
+      </script>
+      ";
+      } else {
+          // Hash the password
+          $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+  
+          // Insert the new user into the database
+          $stmt = $conn->prepare("INSERT INTO user_logins (email, password) VALUES (?, ?)");
+          $stmt->bind_param("ss", $newEmail, $hashedPassword);
+  
+          if ($stmt->execute()) { 
+              echo "
+  
+               <div id='successAlert' class='alert alert-success fixed-top' role='alert' z-index: 1050;'>
+           New account created successfully.
+      </div>
+      <script>
+          // Set a timer to hide the alert after 2 seconds
+          setTimeout(function() {
+              var alert = document.getElementById('successAlert');
+              if (alert) {
+                  alert.style.display = 'none'; // Hide the alert
+              }
+          }, 2000); // 2000 milliseconds = 2 seconds
+      </script>
+              
+              
+             ";
+              
             
-            
-           ";
-            
-          
-        } else 
+          } else 
+  
+          $stmt->close();
+      }
+  
+      $checkEmailQuery->close(); // Close the email check query
+  }
+  
+  
+  
+  // Handle approve and decline actions
+  if (isset($_POST['action']) && isset($_POST['user_id'])) {
+      $userId = $_POST['user_id'];
+      $action = $_POST['action'];
+  
+      if ($action === 'approve') {
+          // Move the user to history as approved
+          $approveQuery = $conn->prepare("UPDATE users SET status = 'approved' WHERE id = ?");
+          $approveQuery->bind_param("i", $userId);
+          $approveQuery->execute();
+      } elseif ($action === 'decline') {
+          // Move the user to history as declined
+          $declineQuery = $conn->prepare("UPDATE users SET status = 'declined' WHERE id = ?");
+          $declineQuery->bind_param("i", $userId);
+          $declineQuery->execute();
+      }
+  }
+  
+  // Fetch users with 'pending' status
+  $pendingUsersQuery = "SELECT id, firstname, lastname, email FROM users WHERE status = 'pending'";
+  $pendingUsersResult = $conn->query($pendingUsersQuery);
+  
+  // Fetch approved users
+  $approvedUsersQuery = "SELECT id, firstname, lastname, email FROM users WHERE status = 'approved'";
+  $approvedUsersResult = $conn->query($approvedUsersQuery);
+  
+  // Fetch declined users
+  $declinedUsersQuery = "SELECT id, firstname, lastname, email FROM users WHERE status = 'declined'";
+  $declinedUsersResult = $conn->query($declinedUsersQuery);
 
-        $stmt->close();
-    }
 
-    $checkEmailQuery->close(); // Close the email check query
-}
-
-
-
-// Handle approve and decline actions
-if (isset($_POST['action']) && isset($_POST['user_id'])) {
-    $userId = $_POST['user_id'];
-    $action = $_POST['action'];
-
-    if ($action === 'approve') {
-        // Move the user to history as approved
-        $approveQuery = $conn->prepare("UPDATE users SET status = 'approved' WHERE id = ?");
-        $approveQuery->bind_param("i", $userId);
-        $approveQuery->execute();
-    } elseif ($action === 'decline') {
-        // Move the user to history as declined
-        $declineQuery = $conn->prepare("UPDATE users SET status = 'declined' WHERE id = ?");
-        $declineQuery->bind_param("i", $userId);
-        $declineQuery->execute();
-    }
-}
-
-// Fetch users with 'pending' status
-$pendingUsersQuery = "SELECT id, firstname, lastname, email FROM users WHERE status = 'pending'";
-$pendingUsersResult = $conn->query($pendingUsersQuery);
-
-// Fetch approved users
-$approvedUsersQuery = "SELECT id, firstname, lastname, email FROM users WHERE status = 'approved'";
-$approvedUsersResult = $conn->query($approvedUsersQuery);
-
-// Fetch declined users
-$declinedUsersQuery = "SELECT id, firstname, lastname, email FROM users WHERE status = 'declined'";
-$declinedUsersResult = $conn->query($declinedUsersQuery);
 ?>
 
 <!DOCTYPE html>
@@ -119,81 +122,144 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-    <link rel="stylesheet" href="admin.css">
-    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
 </head>
+
+<style>
+    /* Hide btn-primary button and show navbar-toggler at screen width of 600px or less */
+     /* Show/hide buttons based on screen width */
+     @media (max-width: 700px) {
+        .d-lg-block {
+            display: none !important;
+        }
+        .d-lg-none {
+            display: block !important;
+        }
+    }
+
+       /* Center-align the content in the offcanvas */
+       .offcanvas-body nav {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Styling for nav links */
+    .offcanvas-body .nav-link {
+        padding: 10px;
+        font-size: 1.1rem;
+        text-align: center;
+        width: 100%;
+        transition: color 0.3s, background-color 0.3s;
+    }
+
+    /* Hover effect */
+    .offcanvas-body .nav-link:hover {
+        background-color: #444;
+        color: #00bfff;
+        border-radius: 5px;
+    }
+
+    /* Centering the logout button */
+    .offcanvas-body form {
+        margin-top: 20px;
+        width: 100%;
+    }
+
+    @media (max-width: 576px) {
+    .table-responsive .table th,
+    .table-responsive .table td {
+        font-size: 12px; /* Adjust as needed */
+    }
+
+    #navbarNav .nav-link {
+        font-size: 14px; /* Smaller font for navbar links */
+    }
+}
+</style>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-2 sidebar">
-                <h4 class="text-white text-center mb-4">Admin Dashboard</h4>
-                <a href="#dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                <a href="#manage-users"><i class="fas fa-users"></i> Manage Users</a>
-                <a href="#activities"><i class="fas fa-tasks"></i> Activities</a>
-                <a href="#history"><i class="fas fa-history"></i> History</a>
-                <a class="nav-link" href="doc_activities.php">
-                     <i class="fas fa-file-alt"></i> Document Activities
-                  </a>
-                  <a href="admin_announcement.php"><i class="fas fa-bullhorn"></i> Announcement</a>
-               
-                <form method="POST" action="logout.php" class="text-center mt-4">
-                    <button type="submit" name="logout" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                </form>
-            </nav>
+    
+<!-- Responsive Navbar -->
+<!-- Navbar with Offcanvas Sidebar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid d-flex justify-content-start">
+        <!-- Button to show at widths above 600px -->
+        <div class="d-none d-lg-block">
+            <button class="btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#staticBackdrop" aria-controls="staticBackdrop">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+        <!-- Button to show at widths of 600px or below -->
+        <div class="d-lg-none">
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#staticBackdrop" aria-controls="staticBackdrop" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+        <h4 class="text-white ms-1">Admin Dashboard</h4>
+    </div>
+</nav>
 
-            <!-- Content area -->
-            <div class="col-md-9 content">
+<!-- Offcanvas Sidebar -->
+<div class="offcanvas offcanvas-start" data-bs-backdrop="static" tabindex="-1" id="staticBackdrop" aria-labelledby="staticBackdropLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="staticBackdropLabel">Admin Dashboard</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body bg-dark">
+        <nav class="nav flex-column text-center">
+            <a class="nav-link text-white" href="#dashboard">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a class="nav-link text-white" href="#manage-users">
+                <i class="fas fa-users"></i> Manage Users
+            </a>
+            <a class="nav-link text-white" href="#activities">
+                <i class="fas fa-tasks"></i> Activities
+            </a>
+            <a class="nav-link text-white" href="#history">
+                <i class="fas fa-history"></i> History
+            </a>
+            <a class="nav-link text-white" href="doc_activities.php">
+                <i class="fas fa-file-alt"></i> Document Activities
+            </a>
+            <a class="nav-link text-white" href="admin_announcement.php">
+                <i class="fas fa-bullhorn"></i> Announcement
+            </a>
+            <form method="POST" action="logout.php" class="text-center mt-4">
+                <button type="submit" name="logout" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </form>
+        </nav>
+    </div>
+</div>
 
-            <div class="card-body">
-            <h2 class="admin-title" id="dashboard"> Barangay Connect </h2>
-                      </div>
-  
-               
-                <hr>
-
-                <div class="card mb-4" id="history">
-                    <div class="card-header">
-                        <h5><i class="fas fa-users"></i> Manage Users</h5>
-                    </div>
-                <div class="card-body">
-                      
-            <!-- Manage Users Section -->
-            <h3 id="manage-users">Create Account For User</h3>
-              
-
-                <!-- Add Account Button -->
-                <button class="btn btn-primary mb-3" id="addAccountBtn"><i class="fas fa-plus"></i> Add Account</button>
-
-                <!-- Form to Add Account (Initially hidden) -->
-                <div id="addAccountForm" style="display: none;">
-                    <form method="post">
-                        <div class="mb-3">
-                            <label for="newEmail" class="form-label">Email:</label>
-                            <input type="email" id="newEmail" name="newEmail" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="newPassword" class="form-label">Password:</label>
-                            <input type="password" id="newPassword" name="newPassword" class="form-control" required>
-                        </div>
-                        <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Submit</button>
-                    </form>
-                </div>
-
-                <hr>
-
-
-                <div class="card mb-4" id="history">
-                    <div class="card-header">
-                        <h5><i class="fas fa-user"></i> Registered Users</h5>
-                    </div>
-                    <div class="card-body">
-                      
-
-                <!-- Example table to display users (for login accounts) -->
-
+<div class="container mt-4">
+    <!-- Manage Users Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Manage Users</h5>
+        </div>
+        <div class="card-body">
+            <button class="btn btn-primary mb-3" id="addAccountBtn">Add Account</button>
+            <div id="addAccountForm" style="display: none;">
+                <!-- Add Account Form HTML Here -->
+                <form method="post">
+                            <div class="mb-3">
+                                <label for="newEmail" class="form-label">Email:</label>
+                                <input type="email" id="newEmail" name="newEmail" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="newPassword" class="form-label">Password:</label>
+                                <input type="password" id="newPassword" name="newPassword" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Submit</button>
+                        </form>
+            </div>
+            <h6>Registered Users</h6>
+            <div class="table-responsive">
                 <table class="table table-striped table-hover">
                     <thead>
                         <tr>
@@ -203,165 +269,147 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                         </tr>
                     </thead>
                     <tbody>
-                        <?php
-                        $query = "SELECT id, email FROM user_logins";
-                        $result = $conn->query($query);
+                    <?php
+                                    $query = "SELECT id, email FROM user_logins";
+                                    $result = $conn->query($query);
 
-                        if ($result->num_rows > 0) {
-                            while ($row = $result->fetch_assoc()) {
-                                echo "<tr>";
-                                echo "<td>" . htmlspecialchars($row['id']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['email']) . "</td>";
-                                echo "<td>
-                                        
-                                        <a href='delete_user.php?id=" . htmlspecialchars($row['id']) . "' class='btn btn-sm btn-danger'><i class='fas fa-trash'></i> Delete</a>
-                                    </td>";
-                                echo "</tr>";
-                            }
-                        } else {
-                            echo "<tr><td colspan='3'>No users found.</td></tr>";
-                        }
-                        ?>
+                                    if ($result->num_rows > 0) {
+                                        while ($row = $result->fetch_assoc()) {
+                                            echo "<tr>";
+                                            echo "<td>" . htmlspecialchars($row['id']) . "</td>";
+                                            echo "<td>" . htmlspecialchars($row['email']) . "</td>";
+                                            echo "<td>
+                                                    <a href='delete_user.php?id=" . htmlspecialchars($row['id']) . "' class='btn btn-sm btn-danger'><i class='fas fa-trash'></i> Delete</a>
+                                                </td>";
+                                            echo "</tr>";
+                                        }
+                                    } else {
+                                        echo "<tr><td colspan='3'>No users found.</td></tr>";
+                                    }
+                                    ?>
+
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
 
+    <hr>
 
-                    </div>
-                </div>
-
-
-
-                    </div>
-                </div>
-
-                <hr>
-
-                    <!-- Activities Section -->
-                <div class="card mb-4" id="history">
-                    <div class="card-header">
-                        <h5><i class="fas fa-tasks"></i> Activities</h5>
-                    </div>
-                    <div class="card-body">
-                      
-                    <table class="table table-striped table-hover">
+    
+    <div class="card mb-4" id="activities">
+        <div class="card-header">
+            <h5><i class="fas fa-tasks"></i> Activities</h5>
+        </div>
+        <div class="card-body">
+            <p>List of recent activities performed by users.</p>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Email</th>
-                            <th>Actions</th>
+                                <th>ID</th>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>Email</th>
+                                <th>Actions</th>
+
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if ($pendingUsersResult->num_rows > 0): ?>
-                            <?php while ($user = $pendingUsersResult->fetch_assoc()): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($user['id']); ?></td>
-                                    <td><?php echo htmlspecialchars($user['firstname']); ?></td>
-                                    <td><?php echo htmlspecialchars($user['lastname']); ?></td>
-                                    <td><?php echo htmlspecialchars($user['email']); ?></td>
-                                    <td>
-                                        <form method="post" class="d-inline">
-                                            <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
-                                            <button type="submit" name="action" value="approve" class="btn btn-sm btn-success"><i class="fas fa-check"></i> Approve</button>
-                                            <button type="submit" name="action" value="decline" class="btn btn-sm btn-danger"><i class="fas fa-times"></i> Decline</button>
-                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewUserModal<?php echo $user['id']; ?>"><i class="fas fa-eye"></i> View</button>
-                                        </form>
+                        <!-- Activities PHP loop -->
+                        <?php
+                            $pendingUsersQuery = "SELECT id, firstname, lastname, email FROM users WHERE status = 'pending'";
+                            $pendingUsersResult = $conn->query($pendingUsersQuery);
+                            if ($pendingUsersResult->num_rows > 0) {
+                                while ($user = $pendingUsersResult->fetch_assoc()) {
+                                    echo "<tr>";
+                                    echo "<td>" . htmlspecialchars($user['id']) . "</td>";
+                                    echo "<td>" . htmlspecialchars($user['firstname']) . "</td>";
+                                    echo "<td>" . htmlspecialchars($user['lastname']) . "</td>";
+                                    echo "<td>" . htmlspecialchars($user['email']) . "</td>";
+                                    echo "<td>
+                                            <form method='post' class='d-inline'>
+                                                <input type='hidden' name='user_id' value='" . htmlspecialchars($user['id']) . "'>
+                                                <button type='submit' name='action' value='approve' class='btn btn-sm btn-success'><i class='fas fa-check'></i> Approve</button>
+                                                <button type='submit' name='action' value='decline' class='btn btn-sm btn-danger'><i class='fas fa-times'></i> Decline</button>
+                                                <button type='button' class='btn btn-sm btn-info' data-bs-toggle='modal' data-bs-target='#viewUserModal" . htmlspecialchars($user['id']) . "'><i class='fas fa-eye'></i> View</button>
+                                            </form>
 
-                                        <!-- Modal for viewing user info -->
-                                        <div class="modal fade" id="viewUserModal<?php echo $user['id']; ?>" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
-                                            <div class="modal-dialog modal-lg">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title" id="viewUserModalLabel">User Information</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <?php
-                                                        // Fetch additional user info for the modal
-                                                        $userInfoQuery = $conn->prepare("SELECT * FROM users WHERE id = ?");
-                                                        $userInfoQuery->bind_param("i", $user['id']);
-                                                        $userInfoQuery->execute();
-                                                        $userInfoResult = $userInfoQuery->get_result();
-                                                        $userInfo = $userInfoResult->fetch_assoc();
-
-                                                        // Display user details
-                                                        echo "<strong>First Name:</strong> " . htmlspecialchars($userInfo['firstname']) . "<br>";
-                                                        echo "<strong>Last Name:</strong> " . htmlspecialchars($userInfo['lastname']) . "<br>";
-                                                        echo "<strong>Middle Name:</strong> " . htmlspecialchars($userInfo['middle_name']) . "<br>";
-                                                        echo "<strong>Email:</strong> " . htmlspecialchars($userInfo['email']) . "<br>";
-                                                        echo "<strong>Contact Number:</strong> " . htmlspecialchars($userInfo['contactnumber']) . "<br>";
-                                                        echo "<strong>Birthdate:</strong> " . htmlspecialchars($userInfo['birthdate']) . "<br>";
-                                                        echo "<strong>Age:</strong> " . htmlspecialchars($userInfo['age']) . "<br>";
-                                                        echo "<strong>Civil Status:</strong> " . htmlspecialchars($userInfo['civil_status']) . "<br>";
-                                                       
-                                                        echo "<strong>Address:</strong> " . htmlspecialchars($userInfo['address']) . "<br>";
-                                                        echo "<strong>Purpose:</strong> " . htmlspecialchars($userInfo['purpose']) . "<br>";
-
-                                                        // Display document if it exists
-                                                        if (isset($userInfo['document']) && !empty($userInfo['document'])) {
-                                                            echo "<strong>Document:</strong><br>";
-                                                            echo "<div style='position: relative; width: 100%; height: 400px; overflow: hidden;'>";
-                                                            echo "<img src='" . htmlspecialchars($userInfo['document']) . "' style='width: 100%; height: 100%; object-fit: cover; position: absolute;' alt='User Document'>";
-                                                            echo "</div><br>";
-                                                        } else {
-                                                            echo "<strong>Document:</strong> No document uploaded.<br>";
-                                                        }
-                                                        echo "<strong>Status:</strong> " . htmlspecialchars($userInfo['status']) . "<br>";
-                                                        ?>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            <!-- Modal for viewing user info -->
+                                            <div class='modal fade' id='viewUserModal" . htmlspecialchars($user['id']) . "' tabindex='-1' aria-labelledby='viewUserModalLabel' aria-hidden='true'>
+                                                <div class='modal-dialog modal-lg'>
+                                                    <div class='modal-content'>
+                                                        <div class='modal-header'>
+                                                            <h5 class='modal-title' id='viewUserModalLabel'>User Information</h5>
+                                                            <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                                                        </div>
+                                                        <div class='modal-body'>";
+                                                        
+                                                            $userInfoQuery = "SELECT * FROM users WHERE id = " . $user['id'];
+                                                            $userInfoResult = $conn->query($userInfoQuery);
+                                                            if ($userInfoResult->num_rows > 0) {
+                                                                $userInfo = $userInfoResult->fetch_assoc();
+                                                                echo "<p><strong>First Name:</strong> " . htmlspecialchars($userInfo['firstname']) . "</p>";
+                                                                echo "<p><strong>Last Name:</strong> " . htmlspecialchars($userInfo['lastname']) . "</p>";
+                                                                echo "<p><strong>Email:</strong> " . htmlspecialchars($userInfo['email']) . "</p>";
+                                                                echo "<p><strong>Address:</strong> " . htmlspecialchars($userInfo['address']) . "</p>";
+                                                                // Add more fields as necessary
+                                                            }
+                                                        
+                                                        echo "</div>
+                                                        <div class='modal-footer'>
+                                                            <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr><td colspan="5">No pending requests.</td></tr>
-                        <?php endif; ?>
+                                        </td>";
+                                    echo "</tr>";
+                                }
+                            } else {
+                                echo "<tr><td colspan='5'>No pending activities found.</td></tr>";
+                            }
+                            ?>
+
                     </tbody>
                 </table>
-                    
-                    </div>
-                </div>
+            </div>
+        </div>
+    </div>
 
-          
-                
 
-                <hr>
+            <hr>
 
-              <!-- History Section -->
-                    <div class="card mb-4" id="history">
-                    <div class="card-header">
-                        <h5><i class="fas fa-history"></i> History</h5>
-                    </div>
-                    <div class="card-body">
 
-                    <p>View the history of approved and declined users.</p>
-                        <ul class="nav nav-tabs" id="myTab" role="tablist">
-                            <li class="nav-item">
-                                <a class="nav-link active" id="approved-tab" data-bs-toggle="tab" href="#approved" role="tab" aria-controls="approved" aria-selected="true">Approved</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="declined-tab" data-bs-toggle="tab" href="#declined" role="tab" aria-controls="declined" aria-selected="false">Declined</a>
-                            </li>
-                        </ul>
-                        <div class="tab-content" id="myTabContent">
-                            <div class="tab-pane fade show active" id="approved" role="tabpanel" aria-labelledby="approved-tab">
-                                <table class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>First Name</th>
-                                            <th>Last Name</th>
-                                            <th>Email</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
+    <!-- History Section -->
+    <div class="card mb-4" id="history">
+        <div class="card-header">
+            <h5><i class="fas fa-history"></i> History</h5>
+        </div>
+        <div class="card-body">
+            <p>View the history of approved and declined users.</p>
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="approved-tab" data-bs-toggle="tab" href="#approved" role="tab" aria-controls="approved" aria-selected="true">Approved</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="declined-tab" data-bs-toggle="tab" href="#declined" role="tab" aria-controls="declined" aria-selected="false">Declined</a>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                <!-- Approved Tab Content -->
+                <div class="tab-pane fade show active" id="approved" role="tabpanel" aria-labelledby="approved-tab">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
+                                    <th>Email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                                 <?php if ($approvedUsersResult->num_rows > 0): ?>
                                     <?php while ($user = $approvedUsersResult->fetch_assoc()): ?>
                                         <tr>
@@ -371,7 +419,6 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                                             <td><?php echo htmlspecialchars($user['email']); ?></td>
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewApprovedUserModal<?php echo $user['id']; ?>"><i class="fas fa-eye"></i> View</button>
-
                                                 <!-- Modal for viewing approved user info -->
                                                 <div class="modal fade" id="viewApprovedUserModal<?php echo $user['id']; ?>" tabindex="-1" aria-labelledby="viewApprovedUserModalLabel" aria-hidden="true">
                                                     <div class="modal-dialog modal-lg">
@@ -381,29 +428,7 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                             </div>
                                                             <div class="modal-body">
-                                                                <?php
-                                                                // Fetch additional approved user info for the modal
-                                                                $approvedUserInfoQuery = $conn->prepare("SELECT * FROM users WHERE id = ?");
-                                                                $approvedUserInfoQuery->bind_param("i", $user['id']);
-                                                                $approvedUserInfoQuery->execute();
-                                                                $approvedUserInfoResult = $approvedUserInfoQuery->get_result();
-                                                                $approvedUserInfo = $approvedUserInfoResult->fetch_assoc();
-
-                                                                // Display user details
-                                                                echo "<strong>First Name:</strong> " . htmlspecialchars($approvedUserInfo['firstname']) . "<br>";
-                                                                echo "<strong>Last Name:</strong> " . htmlspecialchars($approvedUserInfo['lastname']) . "<br>";
-                                                                echo "<strong>Middle Name:</strong> " . htmlspecialchars($approvedUserInfo['middle_name']) . "<br>";
-                                                                echo "<strong>Email:</strong> " . htmlspecialchars($approvedUserInfo['email']) . "<br>";
-                                                                echo "<strong>Contact Number:</strong> " . htmlspecialchars($approvedUserInfo['contactnumber']) . "<br>";
-                                                                echo "<strong>Birthdate:</strong> " . htmlspecialchars($approvedUserInfo['birthdate']) . "<br>";
-                                                                echo "<strong>Age:</strong> " . htmlspecialchars($approvedUserInfo['age']) . "<br>";
-                                                                echo "<strong>Gender:</strong> " . htmlspecialchars($approvedUserInfo['gender']) . "<br>";
-                                                                echo "<strong>Civil Status:</strong> " . htmlspecialchars($approvedUserInfo['civil_status']) . "<br>";
-                                                                echo "<strong>Purpose:</strong> " . htmlspecialchars($approvedUserInfo['purpose']) . "<br>";
-                                                                echo "<strong>Address:</strong> " . htmlspecialchars($approvedUserInfo['address']) . "<br>";
-
-                                                            
-                                                                ?>
+                                                                <!-- User details PHP -->
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -420,102 +445,98 @@ $declinedUsersResult = $conn->query($declinedUsersQuery);
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
-                                </table>
-                            </div>
-                            <div class="tab-pane fade" id="declined" role="tabpanel" aria-labelledby="declined-tab">
-                                <table class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>First Name</th>
-                                            <th>Last Name</th>
-                                            <th>Email</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                <?php if ($declinedUsersResult->num_rows > 0): ?>
-                                    <?php while ($user = $declinedUsersResult->fetch_assoc()): ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($user['id']); ?></td>
-                                            <td><?php echo htmlspecialchars($user['firstname']); ?></td>
-                                            <td><?php echo htmlspecialchars($user['lastname']); ?></td>
-                                            <td><?php echo htmlspecialchars($user['email']); ?></td>
-                                            <td>
-                                                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewDeclinedUserModal<?php echo $user['id']; ?>"><i class="fas fa-eye"></i> View</button>
-
-                                                <!-- Modal for viewing declined user info -->
-                                                <div class="modal fade" id="viewDeclinedUserModal<?php echo $user['id']; ?>" tabindex="-1" aria-labelledby="viewDeclinedUserModalLabel" aria-hidden="true">
-                                                    <div class="modal-dialog modal-lg">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h5 class="modal-title" id="viewDeclinedUserModalLabel">User Information</h5>
-                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <?php
-                                                                // Fetch additional declined user info for the modal
-                                                                $declinedUserInfoQuery = $conn->prepare("SELECT * FROM users WHERE id = ?");
-                                                                $declinedUserInfoQuery->bind_param("i", $user['id']);
-                                                                $declinedUserInfoQuery->execute();
-                                                                $declinedUserInfoResult = $declinedUserInfoQuery->get_result();
-                                                                $declinedUserInfo = $declinedUserInfoResult->fetch_assoc();
-
-                                                                // Display user details
-                                                                echo "<strong>First Name:</strong> " . htmlspecialchars($declinedUserInfo['firstname']) . "<br>";
-                                                                echo "<strong>Last Name:</strong> " . htmlspecialchars($declinedUserInfo['lastname']) . "<br>";
-                                                                echo "<strong>Middle Name:</strong> " . htmlspecialchars($declinedUserInfo['middle_name']) . "<br>";
-                                                                echo "<strong>Email:</strong> " . htmlspecialchars($declinedUserInfo['email']) . "<br>";
-                                                                echo "<strong>Contact Number:</strong> " . htmlspecialchars($declinedUserInfo['contactnumber']) . "<br>";
-                                                                echo "<strong>Birthdate:</strong> " . htmlspecialchars($declinedUserInfo['birthdate']) . "<br>";
-                                                                echo "<strong>Age:</strong> " . htmlspecialchars($declinedUserInfo['age']) . "<br>";
-                                                                echo "<strong>Gender:</strong> " . htmlspecialchars($declinedUserInfo['gender']) . "<br>";
-                                                                echo "<strong>Civil Status:</strong> " . htmlspecialchars($declinedUserInfo['civil_status']) . "<br>";
-                                                                echo "<strong>Purpose:</strong> " . htmlspecialchars($declinedUserInfo['purpose']) . "<br>";
-                                                                echo "<strong>Address:</strong> " . htmlspecialchars($declinedUserInfo['address']) . "<br>";
-    
-                                                                ?>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endwhile; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="5" class="text-center">No declined users found.</td>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                                </table>
-                            </div>
-                        </div>
-                      
+                        </table>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
+                <!-- Declined Tab Content -->
+                <div class="tab-pane fade" id="declined" role="tabpanel" aria-labelledby="declined-tab">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
+                                    <th>Email</th>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
- 
-    <script>
-        $(document).ready(function() {
-            $("#addAccountBtn").click(function() {
-                $("#addAccountForm").toggle();
-            });
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php if ($declinedUsersResult->num_rows > 0): ?>
+                            <?php while ($user = $declinedUsersResult->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($user['id']); ?></td>
+                                    <td><?php echo htmlspecialchars($user['firstname']); ?></td>
+                                    <td><?php echo htmlspecialchars($user['lastname']); ?></td>
+                                    <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewDeclinedUserModal<?php echo $user['id']; ?>"><i class="fas fa-eye"></i> View</button>
+
+                                        <!-- Modal for viewing declined user info -->
+                                        <div class="modal fade" id="viewDeclinedUserModal<?php echo $user['id']; ?>" tabindex="-1" aria-labelledby="viewDeclinedUserModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="viewDeclinedUserModalLabel">User Information</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <?php
+                                                        // Fetch additional declined user info for the modal
+                                                        $declinedUserInfoQuery = $conn->prepare("SELECT * FROM users WHERE id = ?");
+                                                        $declinedUserInfoQuery->bind_param("i", $user['id']);
+                                                        $declinedUserInfoQuery->execute();
+                                                        $declinedUserInfoResult = $declinedUserInfoQuery->get_result();
+                                                        $declinedUserInfo = $declinedUserInfoResult->fetch_assoc();
+
+                                                        // Display user details
+                                                        echo "<strong>First Name:</strong> " . htmlspecialchars($declinedUserInfo['firstname']) . "<br>";
+                                                        echo "<strong>Last Name:</strong> " . htmlspecialchars($declinedUserInfo['lastname']) . "<br>";
+                                                        echo "<strong>Middle Name:</strong> " . htmlspecialchars($declinedUserInfo['middle_name']) . "<br>";
+                                                        echo "<strong>Email:</strong> " . htmlspecialchars($declinedUserInfo['email']) . "<br>";
+                                                        echo "<strong>Contact Number:</strong> " . htmlspecialchars($declinedUserInfo['contactnumber']) . "<br>";
+                                                        echo "<strong>Birthdate:</strong> " . htmlspecialchars($declinedUserInfo['birthdate']) . "<br>";
+                                                        echo "<strong>Age:</strong> " . htmlspecialchars($declinedUserInfo['age']) . "<br>";
+                                                        echo "<strong>Gender:</strong> " . htmlspecialchars($declinedUserInfo['gender']) . "<br>";
+                                                        echo "<strong>Civil Status:</strong> " . htmlspecialchars($declinedUserInfo['civil_status']) . "<br>";
+                                                        echo "<strong>Purpose:</strong> " . htmlspecialchars($declinedUserInfo['purpose']) . "<br>";
+                                                        echo "<strong>Address:</strong> " . htmlspecialchars($declinedUserInfo['address']) . "<br>";
+                                                        ?>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="5" class="text-center">No declined users found.</td>
+                            </tr>
+                        <?php endif; ?>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div> <!-- Closing tab-content -->
+        </div> <!-- Closing card-body -->
+    </div> <!-- Closing card -->
+</div> <!-- Closing container -->
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("#addAccountBtn").click(function() {
+            $("#addAccountForm").toggle();
         });
+    });
+</script>
 
-    </script>
 </body>
 </html>
-
-<?php
-$conn->close(); 
-
-
-?>
