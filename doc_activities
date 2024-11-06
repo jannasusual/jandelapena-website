@@ -1,27 +1,56 @@
 <?php
-session_start();
+// Include database connection
 include 'connection.php';
+session_start();
 
-// Fetch Pending requests
+	
+if (!isset($_SESSION['email'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Fetch pending requests
 $query_pending = "SELECT * FROM document_requests WHERE status = 'pending'";
 $result_pending = $conn->query($query_pending);
 
-// Fetch Ready requests
+// Fetch ready requests
 $query_ready = "SELECT * FROM document_requests WHERE status = 'ready'";
 $result_ready = $conn->query($query_ready);
 
-// Fetch Completed requests
+// Fetch completed requests
 $query_completed = "SELECT * FROM document_requests WHERE status = 'completed'";
 $result_completed = $conn->query($query_completed);
+
+// Update status based on action
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $email = $_POST['email'];
+    $document_type = $_POST['document_type'];
+
+    if (isset($_POST['mark_ready'])) {
+        $update_status = "UPDATE document_requests SET status = 'ready' WHERE email = ? AND document_type = ?";
+    } elseif (isset($_POST['mark_complete'])) {
+        $update_status = "UPDATE document_requests SET status = 'completed' WHERE email = ? AND document_type = ?";
+    }
+
+    if (isset($update_status)) {
+        $stmt = $conn->prepare($update_status);
+        $stmt->bind_param("ss", $email, $document_type);
+        $stmt->execute();
+        $stmt->close();
+
+        // Refresh to show updated results
+        header("Location: doc_activities.php");
+        exit();
+    }
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document Activities</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 <div class="container mt-5">
@@ -45,95 +74,104 @@ $result_completed = $conn->query($query_completed);
         
         <!-- Pending Requests Tab -->
         <div class="tab-pane fade show active" id="pending" role="tabpanel" aria-labelledby="pending-tab">
-            <table class="table table-bordered table-hover">
-                <thead>
-                    <tr>
-                        <th>Email</th>
-                        <th>Document Type</th>
-                        <th>appointment date</th>
-                        <th>appointment time</th>
-                        <th>Request Date</th>
-                        <th>Delivery Method</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($row = $result_pending->fetch_assoc()): ?>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
                         <tr>
-                        <td><?php echo htmlspecialchars($row['email']); ?></td>
-                            <td><?php echo htmlspecialchars($row['document_type']); ?></td>
-                            <td><?php echo htmlspecialchars($row['appointment_date']); ?></td>
-                            <td><?php echo htmlspecialchars($row['appointment_time']); ?></td>
-                            <td><?php echo htmlspecialchars($row['request_date']); ?></td>
-                            <td><?php echo htmlspecialchars($row['delivery_method']); ?></td>
-                            <td><?php echo htmlspecialchars($row['status']); ?></td>
-                            
-                                <form action="update_status.php" method="post">
-                                    <input type="hidden" name="email" value="<?php echo $row['email']; ?>">
-                                    <input type="hidden" name="document_type" value="<?php echo $row['document_type']; ?>">
-                                    <button type="submit" class="btn btn-success" name="ready">Mark as Ready</button>
-                                </form>
-                            </td>
+                            <th>Email</th>
+                            <th>Document Type</th>
+                            <th>Appointment Date</th>
+                            <th>Appointment Time</th>
+                            <th>Request Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
                         </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php while ($row = $result_pending->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                <td><?php echo htmlspecialchars($row['document_type']); ?></td>
+                                <td><?php echo htmlspecialchars($row['appointment_date']); ?></td>
+                                <td><?php echo htmlspecialchars($row['appointment_time']); ?></td>
+                                <td><?php echo htmlspecialchars($row['request_date']); ?></td>
+                                <td><?php echo htmlspecialchars($row['status']); ?></td>
+                                <td>
+                                    <form action="doc_activities.php" method="post">
+                                        <input type="hidden" name="email" value="<?php echo $row['email']; ?>">
+                                        <input type="hidden" name="document_type" value="<?php echo $row['document_type']; ?>">
+                                        <button type="submit" class="btn btn-success w-100" name="mark_ready">Mark as Ready</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Ready Requests Tab -->
         <div class="tab-pane fade" id="ready" role="tabpanel" aria-labelledby="ready-tab">
-            <table class="table table-bordered table-hover">
-                <thead>
-                    <tr>
-                        <th>Email</th>
-                        <th>Document Type</th>
-                        <th>appointment date</th>
-                        <th>appointment time</th>
-                        <th>Request Date</th>
-                        <th>Delivery Method</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($row = $result_ready->fetch_assoc()): ?>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
                         <tr>
-                            <td><?php echo htmlspecialchars($row['email']); ?></td>
-                            <td><?php echo htmlspecialchars($row['document_type']); ?></td>
-                            <td><?php echo htmlspecialchars($row['appointment_date']); ?></td>
-                            <td><?php echo htmlspecialchars($row['appointment_time']); ?></td>
-                            <td><?php echo htmlspecialchars($row['request_date']); ?></td>
-                            <td><?php echo htmlspecialchars($row['delivery_method']); ?></td>
-                            <td><?php echo htmlspecialchars($row['status']); ?></td>
+                            <th>Email</th>
+                            <th>Document Type</th>
+                            <th>Appointment Date</th>
+                            <th>Appointment Time</th>
+                            <th>Request Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
                         </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php while ($row = $result_ready->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                <td><?php echo htmlspecialchars($row['document_type']); ?></td>
+                                <td><?php echo htmlspecialchars($row['appointment_date']); ?></td>
+                                <td><?php echo htmlspecialchars($row['appointment_time']); ?></td>
+                                <td><?php echo htmlspecialchars($row['request_date']); ?></td>
+                                <td><?php echo htmlspecialchars($row['status']); ?></td>
+                                <td>
+                                    <form action="doc_activities.php" method="post">
+                                        <input type="hidden" name="email" value="<?php echo $row['email']; ?>">
+                                        <input type="hidden" name="document_type" value="<?php echo $row['document_type']; ?>">
+                                        <button type="submit" class="btn btn-primary w-100" name="mark_complete">Mark as Complete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Completed Requests Tab -->
         <div class="tab-pane fade" id="completed" role="tabpanel" aria-labelledby="completed-tab">
-            <table class="table table-bordered table-hover">
-                <thead>
-                    <tr>
-                        <th>Email</th>
-                        <th>Document Type</th>
-                        <th>Request Date</th>
-                        <th>Delivery Method</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($row = $result_completed->fetch_assoc()): ?>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
                         <tr>
-                            <td><?php echo htmlspecialchars($row['email']); ?></td>
-                            <td><?php echo htmlspecialchars($row['document_type']); ?></td>
-                            <td><?php echo htmlspecialchars($row['request_date']); ?></td>
-                            <td><?php echo htmlspecialchars($row['delivery_method']); ?></td>
-                            <td><?php echo htmlspecialchars($row['status']); ?></td>
+                            <th>Email</th>
+                            <th>Document Type</th>
+                            <th>Request Date</th>
+                            <th>Status</th>
                         </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php while ($row = $result_completed->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                <td><?php echo htmlspecialchars($row['document_type']); ?></td>
+                                <td><?php echo htmlspecialchars($row['request_date']); ?></td>
+                                <td><?php echo htmlspecialchars($row['status']); ?></td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -143,8 +181,8 @@ $result_completed = $conn->query($query_completed);
 
 </div>
 
+
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
-<?php $conn->close(); ?>
